@@ -10,6 +10,8 @@ binary_thresh = 20
 video_path = 'video2.h264'
 dilate_kernel = np.ones((6, 6), np.uint8)
 erode_kernel = np.ones((3, 3), np.uint8)
+open_kernel = np.ones((5, 5), np.uint8)
+close_kernel = np.ones((10, 10), np.uint8)
 img_width = 240 # 480
 min_contour_area = 1200
 max_contour_area = 6800
@@ -28,6 +30,7 @@ class ImgSeq:
         """
         Add an image to the buffer while kicking out the oldest one.
         :param img -- the image to add
+        :param update_avg -- whether to update the average or not (default=True)
         :return None
         """
         if update_avg:
@@ -64,6 +67,9 @@ def moving_avg_diff(frame) -> np.ndarray:
     return frame_thresh
 
 def three_img_diff(frame) -> np.ndarray:
+    """
+    |grayframe - last_frame| & |last_frame - last_last_frame|
+    """
     grayframe = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
     grayframe = cv2.GaussianBlur(grayframe, (21, 21), 0)
     frame_diff = cv2.absdiff(grayframe, three_img_diff.last_frame)
@@ -78,7 +84,9 @@ def three_img_diff(frame) -> np.ndarray:
 def img_subtract_mog2(frame) -> np.ndarray:
     frame_thresh = img_subtract_mog2.mog.apply(frame, learningRate=0.01)
     _, frame_thresh = cv2.threshold(frame_thresh, 128, 255, cv2.THRESH_BINARY)
-    frame_thresh = cv2.erode(frame_thresh, kernel=erode_kernel, iterations=3)
+    # frame_thresh = cv2.erode(frame_thresh, kernel=erode_kernel, iterations=3)
+    frame_thresh = cv2.morphologyEx(frame_thresh, cv2.MORPH_OPEN, open_kernel)
+    frame_thresh = cv2.morphologyEx(frame_thresh, cv2.MORPH_CLOSE, close_kernel)
     return frame_thresh
 
 
@@ -134,25 +142,26 @@ def main():
     img_diff_init(ref_frame, last_ref_frame)
     # roi_x, roi_y, roi_w, roi_h = cv2.selectROI("ROI", ref_frame)
     roi_x, roi_y, roi_w, roi_h = (118, 0, 122, 30)
-    roi_counter = 0
+    # roi_counter = 0
     force_quit = False
     while cap.isOpened():
         frame = capture_single_frame(cap, resize_width=img_width)
         if frame is None:
             break
 
-        frame_thresh = two_img_diff(frame)
-        # frame_thresh = cv2.erode(frame_thresh, erode_kernel, iterations=1)
-        # frame_thresh = cv2.dilate(frame_thresh, dilate_kernel, iterations=3)
-        frame_thresh3 = three_img_diff(frame)
-        frame_thresh_avg = moving_avg_diff(frame)
+        # frame_thresh2 = two_img_diff(frame)
+        # frame_thresh3 = three_img_diff(frame)
+        # frame_thresh_avg = moving_avg_diff(frame)
         frame_thresh_mog = img_subtract_mog2(frame)
 
-        cv2.imshow('two', frame_thresh)
-        cv2.imshow('three', frame_thresh3)
-        cv2.imshow('avg', frame_thresh_avg)
+        # frame_thresh = cv2.erode(frame_thresh, erode_kernel, iterations=1)
+        # frame_thresh = cv2.dilate(frame_thresh, dilate_kernel, iterations=3)
+
+        # cv2.imshow('two', frame_thresh2)
+        # cv2.imshow('three', frame_thresh3)
+        # cv2.imshow('avg', frame_thresh_avg)
         cv2.imshow('mog', frame_thresh_mog)
-        cnts, _ = cv2.findContours(frame_thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cnts, _ = cv2.findContours(frame_thresh_mog.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         cv2.rectangle(frame, (roi_x, roi_y), (roi_x+roi_w, roi_y+roi_h), (0, 0, 255), 2)
         for c in cnts:
             (x, y, w, h) = cv2.boundingRect(c)
@@ -163,8 +172,8 @@ def main():
                 cv2.circle(frame, (x_centroid, y_centroid), 1, (255,0,255), 5)
                 if roi_x < x_centroid < roi_x+roi_w and roi_y < y_centroid < roi_y + roi_h:
                     # in ROI
-                    roi_counter += 1
-                    print(roi_counter)
+                    # roi_counter += 1
+                    # print(roi_counter)
                     pass
 
         cv2.imshow('original', frame)
