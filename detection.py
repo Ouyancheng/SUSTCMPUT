@@ -1,20 +1,18 @@
-"""
-image detector
-"""
-import argparse
 import cv2
 import numpy as np
-import imutils
+
+
 
 binary_thresh = 20
-video_path = 'video2.h264'
-dilate_kernel = np.ones((6, 6), np.uint8)
-erode_kernel = np.ones((3, 3), np.uint8)
+dilate_kernel = np.ones((5, 5), np.uint8)
+erode_kernel = np.ones((5, 5), np.uint8)
 open_kernel = np.ones((5, 5), np.uint8)
-close_kernel = np.ones((10, 10), np.uint8)
-img_width = 240 # 480
-min_contour_area = 1200
-max_contour_area = 6800
+close_kernel = np.ones((25, 25), np.uint8)
+close_kernel2 = np.ones((3, 3), np.uint8)
+img_width = 480 # 480
+img_height = img_width // 1.5  # will be updated according to the real frame
+min_contour_area = int(2000 * (img_width/240)**2)
+max_contour_area = int(15000 * (img_width/240)**2)
 
 class ImgSeq:
     """
@@ -41,13 +39,6 @@ class ImgSeq:
         self.next_index = (self.next_index + 1) % self.maxlength
 
 
-def capture_single_frame(cap, resize_width=0) -> np.ndarray:
-    ret, frame = cap.read()
-    if not ret:
-        return None
-    if resize_width:
-        frame = imutils.resize(frame, width=resize_width)
-    return frame
 
 def two_img_diff(frame) -> np.ndarray:
     grayframe = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
@@ -55,6 +46,7 @@ def two_img_diff(frame) -> np.ndarray:
     frame_diff = cv2.absdiff(grayframe, two_img_diff.last_frame)
     two_img_diff.last_frame = grayframe
     _, frame_thresh = cv2.threshold(frame_diff, binary_thresh, 255, cv2.THRESH_BINARY)
+    frame_thresh = cv2.dilate(frame_thresh, dilate_kernel, iterations=3)
     return frame_thresh
 
 
@@ -64,6 +56,7 @@ def moving_avg_diff(frame) -> np.ndarray:
     frame_diff = cv2.absdiff(grayframe, moving_avg_diff.seq.avg)
     moving_avg_diff.seq.add_img(grayframe)
     _, frame_thresh = cv2.threshold(frame_diff, binary_thresh, 255, cv2.THRESH_BINARY)
+    frame_thresh = cv2.dilate(frame_thresh, dilate_kernel, iterations=3)
     return frame_thresh
 
 def three_img_diff(frame) -> np.ndarray:
@@ -79,16 +72,45 @@ def three_img_diff(frame) -> np.ndarray:
     _, last_frame_thresh = cv2.threshold(last_frame_diff, binary_thresh, 255, cv2.THRESH_BINARY)
     _, frame_thresh = cv2.threshold(frame_diff, binary_thresh, 255, cv2.THRESH_BINARY)
     frame_thresh = cv2.bitwise_and(last_frame_thresh, frame_thresh)
+    frame_thresh = cv2.dilate(frame_thresh, dilate_kernel, iterations=3)
     return frame_thresh
 
 def img_subtract_mog2(frame) -> np.ndarray:
     frame_thresh = img_subtract_mog2.mog.apply(frame, learningRate=0.01)
-    _, frame_thresh = cv2.threshold(frame_thresh, 128, 255, cv2.THRESH_BINARY)
-    # frame_thresh = cv2.erode(frame_thresh, kernel=erode_kernel, iterations=3)
+    # cv2.imshow('shadow', frame_thresh)
+    _, frame_thresh = cv2.threshold(frame_thresh, 200, 255, cv2.THRESH_BINARY)
     frame_thresh = cv2.morphologyEx(frame_thresh, cv2.MORPH_OPEN, open_kernel)
-    frame_thresh = cv2.morphologyEx(frame_thresh, cv2.MORPH_CLOSE, close_kernel)
+    frame_thresh = cv2.morphologyEx(frame_thresh, cv2.MORPH_CLOSE, close_kernel, iterations=1)
+    # frame_thresh = cv2.erode(frame_thresh, kernel=erode_kernel, iterations=1)
     return frame_thresh
 
+def img_subtract_knn(frame) -> np.ndarray:
+    frame_thresh = img_subtract_knn.knn.apply(frame)
+    _, frame_thresh = cv2.threshold(frame_thresh, 200, 255, cv2.THRESH_BINARY)
+    # frame_thresh = cv2.morphologyEx(frame_thresh, cv2.MORPH_OPEN, open_kernel)
+    # frame_thresh = cv2.morphologyEx(frame_thresh, cv2.MORPH_CLOSE, close_kernel)
+    return frame_thresh
+
+def img_subtract_gmg(frame) -> np.ndarray:
+    frame_thresh = img_subtract_gmg.gmg.apply(frame)
+    _, frame_thresh = cv2.threshold(frame_thresh, 200, 255, cv2.THRESH_BINARY)
+    # frame_thresh = cv2.morphologyEx(frame_thresh, cv2.MORPH_OPEN, open_kernel)
+    # frame_thresh = cv2.morphologyEx(frame_thresh, cv2.MORPH_CLOSE, close_kernel)
+    return frame_thresh
+
+def img_subtract_cnt(frame) -> np.ndarray:
+    frame_thresh = img_subtract_cnt.cnt.apply(frame)
+    _, frame_thresh = cv2.threshold(frame_thresh, 200, 255, cv2.THRESH_BINARY)
+    # frame_thresh = cv2.morphologyEx(frame_thresh, cv2.MORPH_OPEN, open_kernel)
+    # frame_thresh = cv2.morphologyEx(frame_thresh, cv2.MORPH_CLOSE, close_kernel)
+    return frame_thresh
+
+def img_subtract_gsoc(frame) -> np.ndarray:
+    frame_thresh = img_subtract_gsoc.gsoc.apply(frame)
+    _, frame_thresh = cv2.threshold(frame_thresh, 200, 255, cv2.THRESH_BINARY)
+    # frame_thresh = cv2.morphologyEx(frame_thresh, cv2.MORPH_OPEN, open_kernel)
+    # frame_thresh = cv2.morphologyEx(frame_thresh, cv2.MORPH_CLOSE, close_kernel)
+    return frame_thresh
 
 
 two_img_diff.last_frame = None
@@ -96,6 +118,10 @@ moving_avg_diff.seq = None
 three_img_diff.last_frame = None
 three_img_diff.last_last_frame = None
 img_subtract_mog2.mog = None
+img_subtract_knn.knn = None
+img_subtract_gmg.gmg = None
+img_subtract_cnt.cnt = None
+img_subtract_gsoc.gsoc = None
 
 def img_diff_init(ref_frame, last_ref_frame):
     ref_frame = cv2.cvtColor(ref_frame, cv2.COLOR_RGB2GRAY)
@@ -107,90 +133,60 @@ def img_diff_init(ref_frame, last_ref_frame):
     three_img_diff.last_frame = ref_frame
     three_img_diff.last_last_frame = last_ref_frame
     img_subtract_mog2.mog = cv2.createBackgroundSubtractorMOG2(detectShadows=True)
+    img_subtract_knn.knn = cv2.createBackgroundSubtractorKNN(detectShadows=True)
+    img_subtract_gmg.gmg = cv2.bgsegm.createBackgroundSubtractorGMG()
+    img_subtract_cnt.cnt = cv2.bgsegm.createBackgroundSubtractorCNT()
+    img_subtract_gsoc.gsoc = cv2.bgsegm.createBackgroundSubtractorGSOC()
 
+def frame_subtraction(frame) -> np.array:
+    # frame_thresh2 = two_img_diff(frame)
+    # frame_thresh3 = three_img_diff(frame)
+    # frame_thresh_avg = moving_avg_diff(frame)
+    frame_thresh_mog2 = img_subtract_mog2(frame)
+    # frame_thresh_knn = img_subtract_knn(frame)
+    # frame_thresh_gmg = img_subtract_gmg(frame)
+    # frame_thresh_cnt = img_subtract_cnt(frame)
+    # frame_thresh_gsoc = img_subtract_gsoc(frame)
 
-def process_key() -> bool:
-    """
-    process keyboard input
-    """
-    force_quit = False
-    key = cv2.waitKey(1) & 0xFF
-    if key == ord('q'):
-        force_quit = True
-    elif key == ord('p') or key == ord(' '):
-        while 1:
-            key = cv2.waitKey(0) & 0xFF
-            if key == ord('r') or key == ord(' '):
-                break
-            if key == ord('q'):
-                force_quit = True
-                break
-    return force_quit
+    # frame_thresh = cv2.erode(frame_thresh, erode_kernel, iterations=1)
+    # frame_thresh = cv2.dilate(frame_thresh, dilate_kernel, iterations=3)
+    # return frame_thresh_avg
 
-
-
-def main():
-    """
-    main function
-    :return None
-    """
-    global video_path, binary_thresh, dilate_kernel, erode_kernel, img_width
-    cap = cv2.VideoCapture(video_path)
-    last_ref_frame = capture_single_frame(cap, resize_width=img_width)
-    ref_frame = capture_single_frame(cap, resize_width=img_width)
-    print(ref_frame.shape)
-    img_diff_init(ref_frame, last_ref_frame)
-    # roi_x, roi_y, roi_w, roi_h = cv2.selectROI("ROI", ref_frame)
-    roi_x, roi_y, roi_w, roi_h = (118, 0, 122, 30)
-    # roi_counter = 0
-    force_quit = False
-    while cap.isOpened():
-        frame = capture_single_frame(cap, resize_width=img_width)
-        if frame is None:
-            break
-
-        # frame_thresh2 = two_img_diff(frame)
-        # frame_thresh3 = three_img_diff(frame)
-        # frame_thresh_avg = moving_avg_diff(frame)
-        frame_thresh_mog = img_subtract_mog2(frame)
-
-        # frame_thresh = cv2.erode(frame_thresh, erode_kernel, iterations=1)
-        # frame_thresh = cv2.dilate(frame_thresh, dilate_kernel, iterations=3)
-
-        # cv2.imshow('two', frame_thresh2)
-        # cv2.imshow('three', frame_thresh3)
-        # cv2.imshow('avg', frame_thresh_avg)
-        cv2.imshow('mog', frame_thresh_mog)
-        cnts, _ = cv2.findContours(frame_thresh_mog.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        cv2.rectangle(frame, (roi_x, roi_y), (roi_x+roi_w, roi_y+roi_h), (0, 0, 255), 2)
-        for c in cnts:
-            (x, y, w, h) = cv2.boundingRect(c)
-            if min_contour_area < w * h < max_contour_area:
-                cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-                x_centroid = (x+x+w)//2
-                y_centroid = (y+y+h)//2
-                cv2.circle(frame, (x_centroid, y_centroid), 1, (255,0,255), 5)
-                if roi_x < x_centroid < roi_x+roi_w and roi_y < y_centroid < roi_y + roi_h:
-                    # in ROI
-                    # roi_counter += 1
-                    # print(roi_counter)
-                    pass
-
-        cv2.imshow('original', frame)
-
-        force_quit = process_key()
-        if force_quit:
-            break
-
-    cv2.destroyAllWindows()
-    cap.release()
+    # cv2.imshow('two', frame_thresh2)
+    # cv2.imshow('three', frame_thresh3)
+    # cv2.imshow('avg', frame_thresh_avg)
+    # cv2.imshow('mog', frame_thresh_mog)
+    return frame_thresh_mog2
+    # return frame_thresh_knn
+    # return frame_thresh_gmg
+    # return frame_thresh_cnt
+    # return frame_thresh_gsoc
 
 
 
-if __name__ == '__main__':
-    arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument("-v", "--video", type=str)
-    args = arg_parser.parse_args()
-    if args.video:
-        video_path = args.video
-    main()
+def detect_objects(frame) -> ('centroids: [(x: int, y: int)]', 'bboxes: [(x: int, y: int, w: int, h: int)]', 'mask: np.array'):
+    frame_thresh = frame_subtraction(frame)
+    cnts, _ = cv2.findContours(frame_thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    centroids = []
+    bboxes = []
+    for c in cnts:
+        (x, y, w, h) = cv2.boundingRect(c)
+        # print('rect area:', w*h)
+        # print(type(x), type(y), type(w), type(h))
+        if (min_contour_area < w * h):
+            x_centroid = (x + (x+w)) // 2
+            y_centroid = (y + (y+h)) // 2
+            bboxes.append((x, y, w, h))
+            centroids.append((x_centroid, y_centroid))
+        # elif (w * h > max_contour_area):
+        #     bboxes.append((x, y, w, h//2))
+        #     centroids.append(((x+x+w)//2, (y+y+h//2)//2))
+        #     bboxes.append((x, y+h//2, w, h//2))
+        #     centroids.append(((x+x+w)//2, (y+h//2+y+h//2+h//2)//2))
+        #     pass
+        else:
+            # cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 255, 0), 2)
+            pass
+
+    return centroids, bboxes, frame_thresh
+
