@@ -5,41 +5,14 @@ import argparse
 import cv2
 import numpy as np
 import imutils
+import Detection
+import math
 
-binary_thresh = 20
-video_path = 'video2.h264'
-dilate_kernel = np.ones((5, 5), np.uint8)
-erode_kernel = np.ones((3, 3), np.uint8)
-open_kernel = np.ones((5, 5), np.uint8)
-close_kernel = np.ones((25, 25), np.uint8)
-img_width = 240 # 480
-img_height = 160
-min_contour_area = 1500 * (img_width//240) * (img_width//240)
-max_contour_area = 8000 * (img_width//240) * (img_width//240)
+video_path = 'video3.h264'
+single_frame = 0
 
-class ImgSeq:
-    """
-    The image sequence, used for computing moving average
-    """
-    def __init__(self, maxlength, initial_img):
-        self.seq = [initial_img] * maxlength
-        self.next_index = 0
-        self.avg = initial_img
-        self.maxlength = maxlength
-
-    def add_img(self, img, update_avg=True):
-        """
-        Add an image to the buffer while kicking out the oldest one.
-        :param img -- the image to add
-        :param update_avg -- whether to update the average or not (default=True)
-        :return None
-        """
-        if update_avg:
-            self.avg -= self.seq[self.next_index] // self.maxlength
-        self.seq[self.next_index] = img
-        if update_avg:
-            self.avg += self.seq[self.next_index] // self.maxlength
-        self.next_index = (self.next_index + 1) % self.maxlength
+height_border_ratio = 0.0
+width_border_ratio = 0.3
 
 
 def capture_single_frame(cap, resize_width=0) -> np.ndarray:
@@ -50,102 +23,22 @@ def capture_single_frame(cap, resize_width=0) -> np.ndarray:
         frame = imutils.resize(frame, width=resize_width)
     return frame
 
-def two_img_diff(frame) -> np.ndarray:
-    grayframe = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-    grayframe = cv2.GaussianBlur(grayframe, (21, 21), 0)
-    frame_diff = cv2.absdiff(grayframe, two_img_diff.last_frame)
-    two_img_diff.last_frame = grayframe
-    _, frame_thresh = cv2.threshold(frame_diff, binary_thresh, 255, cv2.THRESH_BINARY)
-    frame_thresh = cv2.dilate(frame_thresh, dilate_kernel, iterations=3)
-    return frame_thresh
-
-
-def moving_avg_diff(frame) -> np.ndarray:
-    grayframe = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-    grayframe = cv2.GaussianBlur(grayframe, (21, 21), 0)
-    frame_diff = cv2.absdiff(grayframe, moving_avg_diff.seq.avg)
-    moving_avg_diff.seq.add_img(grayframe)
-    _, frame_thresh = cv2.threshold(frame_diff, binary_thresh, 255, cv2.THRESH_BINARY)
-    frame_thresh = cv2.dilate(frame_thresh, dilate_kernel, iterations=3)
-    return frame_thresh
-
-def three_img_diff(frame) -> np.ndarray:
-    """
-    |grayframe - last_frame| & |last_frame - last_last_frame|
-    """
-    grayframe = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-    grayframe = cv2.GaussianBlur(grayframe, (21, 21), 0)
-    frame_diff = cv2.absdiff(grayframe, three_img_diff.last_frame)
-    last_frame_diff = cv2.absdiff(three_img_diff.last_frame, three_img_diff.last_last_frame)
-    three_img_diff.last_last_frame = three_img_diff.last_frame
-    three_img_diff.last_frame = grayframe
-    _, last_frame_thresh = cv2.threshold(last_frame_diff, binary_thresh, 255, cv2.THRESH_BINARY)
-    _, frame_thresh = cv2.threshold(frame_diff, binary_thresh, 255, cv2.THRESH_BINARY)
-    frame_thresh = cv2.bitwise_and(last_frame_thresh, frame_thresh)
-    frame_thresh = cv2.dilate(frame_thresh, dilate_kernel, iterations=3)
-    return frame_thresh
-
-def img_subtract_mog2(frame) -> np.ndarray:
-    frame_thresh = img_subtract_mog2.mog.apply(frame, learningRate=0.01)
-    _, frame_thresh = cv2.threshold(frame_thresh, 128, 255, cv2.THRESH_BINARY)
-    # frame_thresh = cv2.erode(frame_thresh, kernel=erode_kernel, iterations=3)
-    frame_thresh = cv2.morphologyEx(frame_thresh, cv2.MORPH_OPEN, open_kernel)
-    frame_thresh = cv2.morphologyEx(frame_thresh, cv2.MORPH_CLOSE, close_kernel)
-    return frame_thresh
-
-
-
-two_img_diff.last_frame = None
-moving_avg_diff.seq = None
-three_img_diff.last_frame = None
-three_img_diff.last_last_frame = None
-img_subtract_mog2.mog = None
-
-def img_diff_init(ref_frame, last_ref_frame):
-    ref_frame = cv2.cvtColor(ref_frame, cv2.COLOR_RGB2GRAY)
-    ref_frame = cv2.GaussianBlur(ref_frame, (21, 21), 0)
-    last_ref_frame = cv2.cvtColor(last_ref_frame, cv2.COLOR_RGB2GRAY)
-    last_ref_frame = cv2.GaussianBlur(last_ref_frame, (21, 21), 0)
-    two_img_diff.last_frame = ref_frame
-    moving_avg_diff.seq = ImgSeq(3, ref_frame)
-    three_img_diff.last_frame = ref_frame
-    three_img_diff.last_last_frame = last_ref_frame
-    img_subtract_mog2.mog = cv2.createBackgroundSubtractorMOG2(detectShadows=True)
-
-def frame_subtraction(frame) -> np.array:
-    # frame_thresh2 = two_img_diff(frame)
-    # frame_thresh3 = three_img_diff(frame)
-    # frame_thresh_avg = moving_avg_diff(frame)
-    frame_thresh_mog = img_subtract_mog2(frame)
-
-    # frame_thresh = cv2.erode(frame_thresh, erode_kernel, iterations=1)
-    # frame_thresh = cv2.dilate(frame_thresh, dilate_kernel, iterations=3)
-
-    # cv2.imshow('two', frame_thresh2)
-    # cv2.imshow('three', frame_thresh3)
-    # cv2.imshow('avg', frame_thresh_avg)
-    # cv2.imshow('mog', frame_thresh_mog)
-    return frame_thresh_mog
-
-
 
 def process_key() -> bool:
     """
     process keyboard input
     """
-    force_quit = False
-    key = cv2.waitKey(1) & 0xFF
+    global single_frame
+    wait_time = 1 - single_frame
+    key = cv2.waitKey(wait_time) & 0xFF
     if key == ord('q'):
-        force_quit = True
-    elif key == ord('p') or key == ord(' '):
-        while 1:
-            key = cv2.waitKey(0) & 0xFF
-            if key == ord('r') or key == ord(' '):
-                break
-            if key == ord('q'):
-                force_quit = True
-                break
-    return force_quit
+        return True
+    elif key == ord(' '):
+        single_frame = 1 - single_frame
+        return False
+    elif key == ord('s'):
+        return False
+    return False
 
 class TrackedObj:
     def __init__(self, x_centroid, y_centroid, age=3):
@@ -153,8 +46,15 @@ class TrackedObj:
         self.y_centroid = y_centroid
         self.age = age
 
-def rect_distance(x1, y1, x2, y2):
-    return (x2-x1)+(y2-y1)
+def rect_distance(p1: (int, int), p2: (int, int)) -> int:
+    # print(type(p1[0]), type(p2[1]))
+    return abs(p1[0]-p2[0])+abs(p1[1]-p2[1])
+
+def euclidean_squared_distance(p1: (int, int), p2: (int, int)) -> int:
+    return (p1[0]-p2[0])*(p1[0]-p2[0])+(p1[1]-p2[1])*(p1[1]-p2[1])
+
+def euclidean_distance(p1: (int, int), p2: (int, int)) -> float:
+    return math.sqrt(euclidean_squared_distance(p1, p2))
 
 
 def check_entrance_line_crossing(y, entrance_y, exit_y) -> bool:
@@ -172,24 +72,6 @@ def check_exit_line_crossing(y, entrance_y, exit_y) -> bool:
         return False
 
 
-def detect_objects(frame) -> ('centroids: [(x: int, y: int)]', 'bboxes: [(x: int, y: int, w: int, h: int)]', 'mask: np.array'):
-    frame_thresh = frame_subtraction(frame)
-    cnts, _ = cv2.findContours(frame_thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    centroids = []
-    bboxes = []
-    for c in cnts:
-        (x, y, w, h) = cv2.boundingRect(c)
-        if (min_contour_area < w * h < max_contour_area):
-            x_centroid = (x + (x+w)) // 2
-            y_centroid = (y + (y+h)) // 2
-            bboxes.append((x, y, w, h))
-            centroids.append((x_centroid, y_centroid))
-        else:
-            cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 255, 0), 2)
-            pass
-
-    return centroids, bboxes, frame_thresh
-
 
 class Track:
     def __init__(self, identity, centroid, bbox, kalman):
@@ -201,6 +83,7 @@ class Track:
         self.consecutive_invisible_count = 0
         self.predicted_centroid = centroid
         self.centroid = centroid
+        self.previous_centroid = centroid
         self.init_centroid = centroid
         pass
 
@@ -211,8 +94,8 @@ def predict_new_location_of_all_tracks():
         bbox = t.bbox
         predicted_centroid = t.kalman.predict()
         predicted_centroid = predicted_centroid.astype(np.int32)
-        t.predicted_centroid = (predicted_centroid[0], predicted_centroid[1])
-        t.centroid = t.predicted_centroid
+        t.predicted_centroid = (int(predicted_centroid[0][0]), int(predicted_centroid[1][0]))
+        # t.centroid = t.predicted_centroid
         box_upper_left = (predicted_centroid[0]-bbox[2]//2, predicted_centroid[1]-bbox[3]//2)
         t.bbox = (box_upper_left[0], box_upper_left[1], bbox[2], bbox[3])
 
@@ -221,6 +104,50 @@ def detection_to_track_assignment(centroids, bboxes):
     assignments = []
     unassigned_tracks = []
     unassigned_detections = []
+    assigned_centroids = set()
+    if centroids and tracks:
+        print('centroids:', centroids)
+        print('tracks:', [t.centroid for t in tracks])
+
+    furthest_dist = 86.0
+
+    for i in range(len(tracks)):
+        min_dist = 2147483647
+        closest_centroid = None
+        distances = []
+        for j in range(len(centroids)):
+            current_dist = euclidean_distance(tracks[i].centroid, centroids[j])
+            distances.append(current_dist)
+            if j in assigned_centroids:
+                continue
+            if current_dist > furthest_dist:
+                # print('too far')
+                continue
+            if current_dist < min_dist:
+                min_dist = current_dist
+                closest_centroid = j
+        print('track:',tracks[i].id, 'distances:', distances)
+        if closest_centroid is not None:
+            assignments.append((i, closest_centroid))
+            assigned_centroids.add(closest_centroid)
+        else:
+            print('tracker {} no assign'.format(tracks[i].id))
+            unassigned_tracks.append(i)
+    unassigned_detections = list(set(range(len(centroids))).difference(assigned_centroids))
+
+    return assignments, unassigned_tracks, unassigned_detections
+
+
+def detection_to_track_identity_mapping(centroids, bboxes):
+    '''
+    Identity mapping...
+    '''
+    assignments = []
+    unassigned_tracks = []
+    unassigned_detections = []
+    if assignments:
+        print(assignments)
+
     for i in range(max(len(centroids), len(tracks))):
         if i >= len(centroids):
             unassigned_tracks.append(i)
@@ -229,6 +156,7 @@ def detection_to_track_assignment(centroids, bboxes):
         else:
             assignments.append((i, i))
     return assignments, unassigned_tracks, unassigned_detections
+
 
 
 def update_assigned_tracks(centroids, bboxes, assignments: [('track_index', 'detection_index')]):
@@ -240,7 +168,10 @@ def update_assigned_tracks(centroids, bboxes, assignments: [('track_index', 'det
         tracks[track_index].kalman.correct(np.array(
             [[np.float32(centroid[0])],
              [np.float32(centroid[1])]]))
+        tracks[track_index].previous_centroid = tracks[track_index].centroid
+        # print('uatcentroid:', tracks[track_index].previous_centroid)
         tracks[track_index].centroid = centroid
+        # print('updatedcentroid:', centroid)
         tracks[track_index].bbox = bbox
         tracks[track_index].age += 1
         tracks[track_index].total_visible_count += 1
@@ -251,30 +182,41 @@ def update_unassigned_tracks(unassigned_tracks: [int]):
         if unassignment < len(tracks):
             tracks[unassignment].age += 1
             tracks[unassignment].consecutive_invisible_count += 1
+            pdc = tracks[unassignment].predicted_centroid
+            tracks[unassignment].previous_centroid = (pdc[0], pdc[1])
 
 down_count = 0
 up_count = 0
+left_count = 0
+right_count = 0
 
 def delete_lost_tracks():
-    global tracks, down_count, up_count
+    global tracks, down_count, up_count, left_count, right_count
     new_tracks = []
     if len(tracks) == 0:
         return
-    invisible_for_too_long = 20
+    invisible_for_too_long = 10
     age_threshold = 8
-    border_area = 40
+    height_border_area = int(Detection.img_height * height_border_ratio)
+    width_border_area = int(Detection.img_width * width_border_ratio)
     for t in tracks:
         visibility = t.total_visible_count / t.age
         if (t.age < age_threshold and visibility < 0.6):
-            print('tracker deleted')
+            print('tracker {} deleted'.format(t.id))
         elif (t.consecutive_invisible_count >= invisible_for_too_long):
-            print('tracker deleted')
-            if t.init_centroid[1] < border_area and t.predicted_centroid[1] > img_height - border_area:
+            print('tracker {} deleted'.format(t.id))
+            if t.init_centroid[1] < height_border_area and t.predicted_centroid[1] > Detection.img_height - height_border_area:
                 print('down')
                 down_count += 1
-            elif t.init_centroid[1] > img_height - border_area and t.predicted_centroid[1] < border_area:
+            elif t.init_centroid[1] > Detection.img_height - height_border_area and t.predicted_centroid[1] < height_border_area:
                 print('up')
                 up_count += 1
+            if t.init_centroid[0] < width_border_area and t.predicted_centroid[0] > Detection.img_width - width_border_area:
+                print('right')
+                right_count += 1
+            elif t.init_centroid[0] > Detection.img_width - width_border_area and t.predicted_centroid[0] < width_border_area:
+                print('left')
+                left_count += 1
             pass
         else:
             new_tracks.append(t)
@@ -309,12 +251,17 @@ def create_new_tracks(centroids, bboxes, unassigned_detections):
              [0, 0, 1, 0],
              [0, 0, 0, 1]],
             np.float32) * 0.1
-        kalman.correct(np.array(
+        correct_array = np.array(
             [[np.float32(centroid[0])],
-             [np.float32(centroid[1])]]))
+             [np.float32(centroid[1])]])
+        # for _ in range(10):
+        kalman.predict()
+        kalman.correct(correct_array)
         new_track = Track(next_track_id, centroid, bbox, kalman)
-        next_track_id = (next_track_id + 1) % 1024
+        next_track_id = (next_track_id + 1) % 16384
         tracks.append(new_track)
+        print('new track centroid', new_track.centroid)
+
 
 def display_tracking_results(frame, mask, centroids, bboxes):
     min_visible_count = 6
@@ -325,7 +272,7 @@ def display_tracking_results(frame, mask, centroids, bboxes):
             # cv2.rectangle(mask, (x, y), (x+w, y+h), (255, 255, 255), 2)
             # cv2.circle(frame, ((x+x+w)//2, (y+y+h)//2), 3, (0,0,0), 5)
             (x, y) = t.predicted_centroid
-            cv2.circle(frame, (x, y), 3, (120,120,0), 5)
+            cv2.circle(frame, (x, y), 3, (0,255,255), 5)
             pass
 
     for i in range(len(centroids)):
@@ -335,8 +282,11 @@ def display_tracking_results(frame, mask, centroids, bboxes):
         cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
         pass
 
-    cv2.putText(frame, 'down:'+str(down_count), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255))
-    cv2.putText(frame, 'up:'+str(up_count), (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0))
+    cv2.putText(frame, 'down:'+str(down_count), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), thickness=2)
+    cv2.putText(frame, 'up:'+str(up_count), (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), thickness=2)
+    cv2.putText(frame, 'left:'+str(left_count), (10, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), thickness=2)
+    cv2.putText(frame, 'right:'+str(right_count), (10, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), thickness=2)
+
 
     cv2.imshow('original', frame)
     cv2.imshow('mask', mask)
@@ -350,19 +300,27 @@ def main():
     main function
     :return None
     """
-    global video_path, binary_thresh, dilate_kernel, erode_kernel, img_width, img_height
+    global video_path, \
+        binary_thresh, \
+        dilate_kernel, \
+        erode_kernel, \
+        min_contour_area, \
+        max_contour_area
     cap = cv2.VideoCapture(video_path)
-    last_ref_frame = capture_single_frame(cap, resize_width=img_width)
-    ref_frame = capture_single_frame(cap, resize_width=img_width)
+    last_ref_frame = capture_single_frame(cap, resize_width=Detection.img_width)
+    ref_frame = capture_single_frame(cap, resize_width=Detection.img_width)
     print(ref_frame.shape)
-    img_height = ref_frame.shape[0]
-    img_diff_init(ref_frame, last_ref_frame)
-
+    Detection.img_height = ref_frame.shape[0]
+    Detection.img_diff_init(ref_frame, last_ref_frame)
+    frame_cnt = 1
     while cap.isOpened():
-        frame = capture_single_frame(cap, resize_width=img_width)
+        if single_frame:
+            print('FRAME {}'.format(frame_cnt))
+        frame = capture_single_frame(cap, resize_width=Detection.img_width)
         if frame is None:
             break
-        centroids, bboxes, mask = detect_objects(frame)
+        centroids, bboxes, mask = Detection.detect_objects(frame)
+        # print('centroids:', centroids)
         predict_new_location_of_all_tracks()
         assignments, unassigned_tracks, unassigned_detections = detection_to_track_assignment(centroids, bboxes)
         # print(assignments, unassigned_tracks, unassigned_detections)
@@ -375,6 +333,7 @@ def main():
         force_quit = process_key()
         if force_quit:
             break
+        frame_cnt += 1
 
     cv2.destroyAllWindows()
     cap.release()
@@ -384,7 +343,10 @@ def main():
 if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument("-v", "--video", type=str)
+    # arg_parser.add_argument("-s", "--single", type=bool, nargs='?', const=True)
     args = arg_parser.parse_args()
     if args.video:
         video_path = args.video
+    # if args.single:
+    #     single_frame = 1
     main()
