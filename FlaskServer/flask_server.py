@@ -1,19 +1,19 @@
 """
 A Flask server for generating QR code
+Required modules: ics, flask, pyqrcode, pypng, arrow
 """
 import argparse
 import io
 import uuid
+import json
 import flask
-# from werkzeug.utils import secure_filename
 import ics
 import pyqrcode
 import verification
 
-app = flask.Flask(__name__)
-debug = False
-app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024
-# app.config["UPLOAD_FOLDER"] = "uploads"
+app: flask.Flask = flask.Flask(__name__)
+debug: bool = False
+app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024  # 1MB
 
 
 @app.route("/", methods=["GET"])
@@ -44,7 +44,6 @@ def verify(target: uuid.UUID):
     """
     Verify a UUID string
     """
-    # test_uuid: 1bbff1ac-0a0a-422e-81c6-06514d563094
     if verification.verify_uuid(str(target)):
         return "OK"
     return "FAILED"
@@ -56,22 +55,42 @@ def upload_ics():
     Route point to handle ics file upload
     """
     if "ics" not in flask.request.files:
-        return "upload_failed: no file is uploaded"
+        return json.dumps({
+            "success": False,
+            "msg": "upload_failed: no file is uploaded"
+        })
     file_obj = flask.request.files["ics"]
 
-    # filename = secure_filename(file_obj.filename)
-    # save_path = "{}/{}".format(app.config["UPLOAD_FOLDER"], filename)
-    # file_obj.save(save_path)
     try:
-        cal = ics.Calendar(file_obj.read().decode('iso-8859-1'))
+        cal: ics.Calendar = ics.Calendar(file_obj.read().decode('iso-8859-1'))
     except Exception as e:
         print(e)
-        return "process_failed: not a valid ics file"
-    uuid_str = verification.process_ics(cal)
+        return json.dumps({
+            "success": False,
+            "msg": "process_failed: not a valid ics file"
+        })
+    uuid_str: str = verification.process_ics(cal)
     if uuid_str is None:
-        return "process_failed: internal error"
-    # return flask.send_file(qrcode_stream, mimetype="image/png")
-    return flask.url_for("getcode", target=uuid_str)
+        return json.dumps({
+            "success": False,
+            "msg": "process_failed: internal error"
+        })
+    return json.dumps({
+        "success": True,
+        "msg": flask.url_for("getcode", target=uuid_str)
+    })
+
+
+@app.route("/testjson")
+def test_json():
+    """
+    Testing mount point
+    """
+    print(flask.request.is_json)
+    if flask.request.is_json:
+        print(type(flask.request.get_json()))
+        print(flask.request.get_json())
+    return '{"data": true}'
 
 
 if __name__ == '__main__':
@@ -85,6 +104,6 @@ if __name__ == '__main__':
         debug = args.debug
         print("Server running in debug mode")
     app.debug = debug
-    service_ip = None if debug else '0.0.0.0'
-    service_port = 8080 if args.port is None else int(args.port)
+    service_ip: str = None if debug else '0.0.0.0'
+    service_port: int = 8080 if args.port is None else int(args.port)
     app.run(host=service_ip, port=service_port)

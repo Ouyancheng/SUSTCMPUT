@@ -1,0 +1,32 @@
+BEGIN:VCALENDAR
+PRODID:-//Google Inc//Google Calendar 70.9054//EN
+VERSION:2.0
+CALSCALE:GREGORIAN
+METHOD:REQUEST
+BEGIN:VEVENT
+DTSTART:20190429T210000Z
+DTEND:20190429T213000Z
+DTSTAMP:20190429T151028Z
+ORGANIZER;CN=oardakan@ualberta.ca:mailto:oardakan@ualberta.ca
+UID:5m19l3tg1945r82oe0lknldqmb@google.com
+ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=
+ TRUE;CN=ou2@ualberta.ca;X-NUM-GUESTS=0:mailto:ou2@ualberta.ca
+ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=ACCEPTED;RSVP=TRUE
+ ;CN=oardakan@ualberta.ca;X-NUM-GUESTS=0:mailto:oardakan@ualberta.ca
+X-MICROSOFT-CDO-OWNERAPPTID:801556298
+CREATED:20190429T151009Z
+DESCRIPTION:-::~:~::~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~
+ :~:~:~:~:~:~:~:~::~:~::-\nPlease do not edit this section of the descriptio
+ n.\n\nView your event at https://www.google.com/calendar/event?action=VIEW&
+ eid=NW0xOWwzdGcxOTQ1cjgyb2UwbGtubGRxbWIgb3UyQHVhbGJlcnRhLmNh&tok=MjAjb2FyZG
+ FrYW5AdWFsYmVydGEuY2EwNDUyMDFjNDQyNjk1ZTY4NWM5MDk4Njg3NjlkNjJkNjNlNjMzYmYy&
+ ctz=America%2FEdmonton&hl=en&es=1.\n-::~:~::~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~
+ :~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~::~:~::-
+LAST-MODIFIED:20190429T151025Z
+LOCATION:
+SEQUENCE:0
+STATUS:CONFIRMED
+SUMMARY:Meeting Yancheng
+TRANSP:OPAQUE
+END:VEVENT
+END:VCALENDAR

@@ -7,6 +7,10 @@ var dragHandler = function (event) {
 var dropHandler = function (event) {
     event.preventDefault();
     var files = event.originalEvent.dataTransfer.files;
+    if (files.length <= 0) {
+        console.log("No file is uploaded");
+        return;
+    }
     if (files[0].size / 1024 / 1024 > 1) {
         var qrcode = document.getElementById("qrcode");
         qrcode.textContent = "upload file size is limited to 1MB, file too large!";
@@ -21,23 +25,25 @@ var dropHandler = function (event) {
         method: "post",
         processData: false,
         contentType: false,
-        data: formData,
-        success: (result) => {
-            // console.log(files[0]);
-            // console.log(result);
-            var qrcode = document.getElementById("qrcode");
-            if (result.includes("failed")) {
-                qrcode.textContent = result;
-                return;
-            }
-            var img = document.createElement('img');
-            img.setAttribute("src", result);
-            qrcode.textContent = "";
-            qrcode.appendChild(img);
-        }
+        data: formData
     };
 
     var promise = $.ajax(req);
+    promise.done(response => {
+        var result = $.parseJSON(response);
+        // console.log(result);
+        var qrcode = document.getElementById("qrcode");
+        if (!result["success"]) {
+            qrcode.textContent = result["msg"];
+            return;
+        }
+        var img = document.createElement('img');
+        img.setAttribute("src", result["msg"]);
+        qrcode.textContent = "";
+        qrcode.appendChild(img);
+    }).fail(err => {
+        console.log("ERROR in processing ics:", err);
+    });
 
 };
 

@@ -1,0 +1,38 @@
+BEGIN:VCALENDAR
+PRODID:-//Google Inc//Google Calendar 70.9054//EN
+VERSION:2.0
+CALSCALE:GREGORIAN
+METHOD:REQUEST
+BEGIN:VEVENT
+DTSTART:20190705T163000Z
+DTEND:20190705T173000Z
+DTSTAMP:20190704T211227Z
+ORGANIZER;CN=kalvin1@ualberta.ca:mailto:kalvin1@ualberta.ca
+UID:3qqlrgfkuk6p266qed0g2eg56j@google.com
+ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=
+ TRUE;CN=oardakan@ualberta.ca;X-NUM-GUESTS=0:mailto:oardakan@ualberta.ca
+ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=
+ TRUE;CN=leepaksh@ualberta.ca;X-NUM-GUESTS=0:mailto:leepaksh@ualberta.ca
+ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=ACCEPTED;RSVP=TRUE
+ ;CN=kalvin1@ualberta.ca;X-NUM-GUESTS=0:mailto:kalvin1@ualberta.ca
+ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=
+ TRUE;CN=ou2@ualberta.ca;X-NUM-GUESTS=0:mailto:ou2@ualberta.ca
+X-MICROSOFT-CDO-OWNERAPPTID:1632220077
+CREATED:20190704T210615Z
+DESCRIPTION:Could we possibly meet earlier?\n\nI'd like to go for lunch on 
+ Whyte with the interns from our lab (you're welcome to join!)\n\n-::~:~::~:
+ ~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~::~:~:
+ :-\nPlease do not edit this section of the description.\n\nView your event 
+ at https://www.google.com/calendar/event?action=VIEW&eid=M3FxbHJnZmt1azZwMj
+ Y2cWVkMGcyZWc1Nmogb3UyQHVhbGJlcnRhLmNh&tok=MTkja2FsdmluMUB1YWxiZXJ0YS5jYTYy
+ M2Q4NTY4OWRiNTFhZTNmMjE2ZTBlMzczZmVmMjEwZmMzMTViOWE&ctz=America%2FEdmonton&
+ hl=en&es=1.\n-::~:~::~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:
+ ~:~:~:~:~:~:~:~:~::~:~::-
+LAST-MODIFIED:20190704T211226Z
+LOCATION:
+SEQUENCE:1
+STATUS:CONFIRMED
+SUMMARY:BuildSys Demo
+TRANSP:OPAQUE
+END:VEVENT
+END:VCALENDAR

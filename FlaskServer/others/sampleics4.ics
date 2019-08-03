@@ -1,0 +1,62 @@
+BEGIN:VCALENDAR
+PRODID:-//Google Inc//Google Calendar 70.9054//EN
+VERSION:2.0
+CALSCALE:GREGORIAN
+METHOD:REQUEST
+BEGIN:VEVENT
+DTSTART:20190826T150000Z
+DTEND:20190826T175000Z
+DTSTAMP:20190710T181047Z
+ORGANIZER;CN=stroulia@ualberta.ca:mailto:stroulia@ualberta.ca
+UID:5efhksemvo87t36hm2uscj7d46@google.com
+ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=
+ TRUE;CN=legilmou@ualberta.ca;X-NUM-GUESTS=0:mailto:legilmou@ualberta.ca
+ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=
+ TRUE;CN=ou2@ualberta.ca;X-NUM-GUESTS=0:mailto:ou2@ualberta.ca
+ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=
+ TRUE;CN=leepaksh@ualberta.ca;X-NUM-GUESTS=0:mailto:leepaksh@ualberta.ca
+ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=
+ TRUE;CN=fatemipo@ualberta.ca;X-NUM-GUESTS=0:mailto:fatemipour@ualberta.ca
+ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=ACCEPTED;RSVP=TRUE
+ ;CN=golestan@ualberta.ca;X-NUM-GUESTS=0:mailto:golestan@ualberta.ca
+ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=
+ TRUE;CN=hajihass@ualberta.ca;X-NUM-GUESTS=0:mailto:hajihass@ualberta.ca
+ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=
+ TRUE;CN=cgutierr@ualberta.ca;X-NUM-GUESTS=0:mailto:cgutierr@ualberta.ca
+ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=TENTATIVE;RSVP=TRU
+ E;CN=Ioanis Nikolaidis;X-NUM-GUESTS=0;X-RESPONSE-COMMENT="it depends -- I e
+ xpect for an exam to be finalized on that day ":mailto:nikolaidis@ualberta.
+ ca
+ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=ACCEPTED;RSVP=TRUE
+ ;CN=oardakan@ualberta.ca;X-NUM-GUESTS=0:mailto:oardakan@ualberta.ca
+ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=
+ TRUE;CN=kalvin1@ualberta.ca;X-NUM-GUESTS=0:mailto:kalvin1@ualberta.ca
+ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=
+ TRUE;CN=Tianyu Zhang;X-NUM-GUESTS=0:mailto:tzhang6@ualberta.ca
+ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=ACCEPTED;RSVP=TRUE
+ ;CN=csydora@ualberta.ca;X-NUM-GUESTS=0:mailto:csydora@ualberta.ca
+ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=
+ TRUE;CN=mdmonir@ualberta.ca;X-NUM-GUESTS=0:mailto:mdmonir@ualberta.ca
+ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=
+ TRUE;CN=xinlei1@ualberta.ca;X-NUM-GUESTS=0:mailto:xinlei1@ualberta.ca
+ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=ACCEPTED;RSVP=TRUE
+ ;CN=stroulia@ualberta.ca;X-NUM-GUESTS=0:mailto:stroulia@ualberta.ca
+X-MICROSOFT-CDO-OWNERAPPTID:-1528677165
+CREATED:20190710T171606Z
+DESCRIPTION:A big informal group meeting with all of us who are working on 
+ "smart buildings/homes" to kickstart the new term!\n\n-::~:~::~:~:~:~:~:~:~
+ :~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~::~:~::-\nPlease 
+ do not edit this section of the description.\n\nView your event at https://
+ www.google.com/calendar/event?action=VIEW&eid=NWVmaGtzZW12bzg3dDM2aG0ydXNja
+ jdkNDYgb3UyQHVhbGJlcnRhLmNh&tok=MjAjc3Ryb3VsaWFAdWFsYmVydGEuY2EyN2Q2MGQzMzF
+ hNTQxNTdlODVlOTMxNDk1MmVkZjA2MDk4Y2ViOTg1&ctz=America%2FEdmonton&hl=en&es=1
+ .\n-::~:~::~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:~:
+ ~:~:~:~::~:~::-
+LAST-MODIFIED:20190710T181046Z
+LOCATION:TBA
+SEQUENCE:0
+STATUS:CONFIRMED
+SUMMARY:Smart Buildings Meeting
+TRANSP:OPAQUE
+END:VEVENT
+END:VCALENDAR
