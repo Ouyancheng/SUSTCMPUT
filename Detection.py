@@ -189,4 +189,3 @@ def detect_objects(frame) -> ('centroids: [(x: int, y: int)]', 'bboxes: [(x: int
             pass
 
     return centroids, bboxes, frame_thresh
-

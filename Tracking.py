@@ -11,7 +11,7 @@ import math
 video_path = 'video3.h264'
 single_frame = 0
 
-height_border_ratio = 0.0
+height_border_ratio = 0.3
 width_border_ratio = 0.3
 
 
